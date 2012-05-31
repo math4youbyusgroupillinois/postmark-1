@@ -1,8 +1,8 @@
 package postmark
 
 import (
-    "testing"
     "os"
+    "testing"
 )
 
 // Probably should figure out a way to run these tests without 
@@ -19,7 +19,7 @@ func setup(t *testing.T) map[string]string {
     return cfg
 }
 
-func TestSend(t *testing.T){
+func TestSend(t *testing.T) {
 
     cfg := setup(t)
     println(cfg["key"])
@@ -28,11 +28,11 @@ func TestSend(t *testing.T){
         t.Fatal("NewPostmark (check api key)")
     }
     r, e := p.Send(&Message{
-                From: cfg["from"],
-                To: cfg["to"],
-                Subject: "TestSend",
-                TextBody: "TestSend Body",
-            })
+        From:     cfg["from"],
+        To:       cfg["to"],
+        Subject:  "TestSend",
+        TextBody: "TestSend Body",
+    })
 
     if e != nil {
         t.Fatal("Send failed! ", e.Error())
@@ -43,15 +43,15 @@ func TestSend(t *testing.T){
     }
 }
 
-func TestAttachment(t *testing.T){
+func TestAttachment(t *testing.T) {
     cfg := setup(t)
 
     msg := &Message{
-                From: cfg["from"],
-                To: cfg["to"],
-                Subject: "TestAttach",
-                TextBody: "Test attach body",
-            }
+        From:     cfg["from"],
+        To:       cfg["to"],
+        Subject:  "TestAttach",
+        TextBody: "Test attach body",
+    }
 
     err := msg.Attach("testdata/attachment.txt")
     println(msg.String())
@@ -69,5 +69,6 @@ func TestAttachment(t *testing.T){
     }
 
     if rsp.ErrorCode != 0 {
-        t.Fatal("Response fail. ", rsp.String())    }
+        t.Fatal("Response fail. ", rsp.String())
+    }
 }

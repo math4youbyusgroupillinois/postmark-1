@@ -1,46 +1,55 @@
 package postmark
 
 import (
-    "io"
-    "net/http"
     "bytes"
     "fmt"
+    "io"
+    "net/http"
 )
 
-const emailUrl = "https://api.postmarkapp.com/email"
-//const batchUrl = "https://api.postmarkapp.com/email/batch"
+const (
+    Endpoint   = "https://api.postmarkapp.com/email"
+    AuthHeader = "X-Postmark-Server-Token"
+)
+
+var (
+    MissingOrIncorrectAPIKey = fmt.Errorf("postmark: Missing or incorrect API key header")
+    MalformedJSON            = fmt.Errorf("postmark: Malformed JSON or incorrect fields")
+    ServerError              = fmt.Errorf("postmark: Server error")
+    client                   http.Client
+)
 
 type Postmark struct {
     key string
 }
 
-func NewPostmark(apikey string)(*Postmark){
-    return &Postmark{ key: apikey }
+func NewPostmark(apikey string) *Postmark {
+    return &Postmark{key: apikey}
 }
 
-func (p *Postmark) Send(m *Message)(* Response, error){
-
+func (p *Postmark) Send(m *Message) (*Response, error) {
     data, err := m.Marshal()
     if err != nil {
         return nil, err
     }
     postData := bytes.NewBuffer(data)
-    req, err := http.NewRequest("POST", emailUrl, postData)
+    req, err := http.NewRequest("POST", Endpoint, postData)
     req.Header.Set("Accept", "application/json")
     req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("X-Postmark-Server-Token", p.key)
+    req.Header.Set(AuthHeader, p.key)
 
-    rsp, err :=  http.DefaultClient.Do(req)
+    rsp, err := client.Do(req)
     if err != nil {
         return nil, err
     }
+
     switch {
-        case rsp.StatusCode == 401:
-            return nil, fmt.Errorf("Missing of incorrect API key header")
-        case rsp.StatusCode == 422:
-            return nil, fmt.Errorf("Malformed JSON or incorrect fields")
-        case rsp.StatusCode == 500:
-            return nil, fmt.Errorf("Postmark seems to be down!")
+    case rsp.StatusCode == 401:
+        return nil, MissingOrIncorrectAPIKey
+    case rsp.StatusCode == 422:
+        return nil, MalformedJSON
+    case rsp.StatusCode == 500:
+        return nil, ServerError
     }
 
     var body bytes.Buffer

@@ -1,12 +1,12 @@
 package main
 
 import (
+    "fmt"
     "github.com/gcmurphy/postmark"
     "os"
-    "fmt"
 )
 
-func main(){
+func main() {
 
     apiKey := os.Getenv("POSTMARK_API")
     if len(apiKey) <= 0 {
@@ -15,14 +15,14 @@ func main(){
     }
     p := postmark.NewPostmark(apiKey)
     r, e := p.Send(&postmark.Message{
-                From: "example@sender.com",
-                To: "example@receiver.com",
-                Subject: "Test postmark",
-                TextBody: "Hello World!"})
+        From:     "example@sender.com",
+        To:       "example@receiver.com",
+        Subject:  "Test postmark",
+        TextBody: "Hello World!"})
 
     if e != nil {
         fmt.Println("ERROR: ", e.String())
         os.Exit(1)
     }
-    fmt.Println("Response :" , r.String())
+    fmt.Println("Response :", r.String())
 }

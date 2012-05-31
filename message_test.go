@@ -26,26 +26,26 @@ var jsonRsp string = `{
   "To" : "receiver@example.com"
 }`
 
-func TestMarshal(t *testing.T){
-    email := &Message {
-                From : "sender@example.com",
-                To : "receiver@example.com",
-                Cc : "copied@example.com",
-                Bcc: "blank-copied@example.com",
-                Subject : "Test",
-                Tag : "Invitation",
-                HtmlBody : "<b>Hello</b>",
-                TextBody : "Hello",
-                ReplyTo : "reply@example.com",
-                Headers : []Header{Header{Name: "CUSTOM-HEADER", Value: "value"}}}
-    msg,err := email.Marshal()
+func TestMarshal(t *testing.T) {
+    email := &Message{
+        From:     "sender@example.com",
+        To:       "receiver@example.com",
+        Cc:       "copied@example.com",
+        Bcc:      "blank-copied@example.com",
+        Subject:  "Test",
+        Tag:      "Invitation",
+        HtmlBody: "<b>Hello</b>",
+        TextBody: "Hello",
+        ReplyTo:  "reply@example.com",
+        Headers:  []Header{Header{Name: "CUSTOM-HEADER", Value: "value"}}}
+    msg, err := email.Marshal()
     if err != nil {
         t.Errorf("Can't marshal object to json: %s\n", err)
     }
     println(string(msg))
 }
 
-func TestUnmarshal(t *testing.T){
+func TestUnmarshal(t *testing.T) {
 
     email, err := UnmarshalMessage([]byte(jsonMsg))
     if err != nil {
@@ -60,7 +60,7 @@ func TestUnmarshal(t *testing.T){
     println(rsp.String())
 }
 
-func TestAttach(t *testing.T){
+func TestAttach(t *testing.T) {
 
     // Load object from template json
     email, err := UnmarshalMessage([]byte(jsonMsg))

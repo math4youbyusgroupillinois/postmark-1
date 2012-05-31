@@ -1,53 +1,57 @@
 package postmark
+
 import (
-    "os"
+    "encoding/base64"
+    "encoding/json"
     "fmt"
     "io/ioutil"
-    "encoding/json"
-    "encoding/base64"
-    "path"
     "mime"
+    "os"
+    "path"
+)
+
+const (
+    MaxAttachmentSize = 10485760
 )
 
 type Header struct {
-    Name string
+    Name  string
     Value string
 }
 
 type Attachment struct {
-    Name string
-    Content string // Base 64 encoded string
+    Name        string
+    Content     string // Base 64 encoded string
     ContentType string
 }
 
 type Response struct {
-    ErrorCode int
-    Message string
-    MessageID string
-    SubmittedAt string //Date 
-    To string
+    ErrorCode   int
+    Message     string
+    MessageID   string
+    SubmittedAt string //Date
+    To          string
 }
 
 type BatchResponse []Response
 
 type Message struct {
-    From string
-    To string
-    Cc string
-    Bcc string
-    Subject string
-    Tag string
-    HtmlBody string
-    TextBody string
-    ReplyTo string
-    Headers []Header
+    From        string
+    To          string
+    Cc          string
+    Bcc         string
+    Subject     string
+    Tag         string
+    HtmlBody    string
+    TextBody    string
+    ReplyTo     string
+    Headers     []Header
     Attachments []Attachment
 }
 
 type BatchMessage []Message
 
-
-func (p *Message) String() string{
+func (p *Message) String() string {
     js, e := json.MarshalIndent(p, "", "")
     if e != nil {
         return ""
@@ -56,27 +60,26 @@ func (p *Message) String() string{
 }
 
 // Attach file to message (base64 encoded)
-func (p *Message) Attach(file string)(error){
-
-    finfo, e := os.Stat(file)
-    if e != nil {
-        return e
+func (p *Message) Attach(file string) error {
+    finfo, err := os.Stat(file)
+    if err != nil {
+        return err
     }
 
-    if finfo.Size() > int64(10e6){
+    if finfo.Size() > MaxAttachmentSize {
         return fmt.Errorf("File size %d exceeds 10MB limit.", finfo.Size())
     }
 
-    fh, e := os.Open(file)
-    if e != nil {
-        return e
+    fh, err := os.Open(file)
+    if err != nil {
+        return err
     }
 
     // Even though we only have 10MB limit..
     // I probably shouldn't do this..
-    cnt, e := ioutil.ReadAll(fh)
-    if e != nil {
-        return e
+    cnt, err := ioutil.ReadAll(fh)
+    if err != nil {
+        return err
     }
     fh.Close()
 
@@ -86,45 +89,41 @@ func (p *Message) Attach(file string)(error){
     }
 
     attachment := Attachment{
-        Name: finfo.Name(),
-        Content: base64.StdEncoding.EncodeToString(cnt),
+        Name:        finfo.Name(),
+        Content:     base64.StdEncoding.EncodeToString(cnt),
         ContentType: mimeType,
     }
     p.Attachments = append(p.Attachments, attachment)
     return nil
 }
 
-func unmarshal (msg []byte, i interface{})(error){
-    e := json.Unmarshal(msg, i)
-    if e != nil {
-        return e
-    }
-    return nil
+func unmarshal(msg []byte, i interface{}) error {
+    return json.Unmarshal(msg, i)
 }
 
-func (m *Message) Marshal()([]byte, error){
+func (m *Message) Marshal() ([]byte, error) {
     return json.Marshal(*m)
 }
 
-func UnmarshalMessage(msg []byte)(*Message, error){
+func UnmarshalMessage(msg []byte) (*Message, error) {
     var m Message
-    e := unmarshal(msg, &m)
-    return &m, e
+    err := unmarshal(msg, &m)
+    return &m, err
 }
 
-func (r *Response) Marshal()([]byte, error){
+func (r *Response) Marshal() ([]byte, error) {
     return json.Marshal(*r)
 }
 
-func UnmarshalResponse(rsp []byte)(*Response, error){
+func UnmarshalResponse(rsp []byte) (*Response, error) {
     var r Response
-    e := unmarshal(rsp, &r)
-    return &r, e
+    err := unmarshal(rsp, &r)
+    return &r, err
 }
 
-func (r *Response) String() string{
-    js, e := json.MarshalIndent(r, "", "")
-    if e != nil {
+func (r *Response) String() string {
+    js, err := json.MarshalIndent(r, "", "")
+    if err != nil {
         return ""
     }
     return string(js)
