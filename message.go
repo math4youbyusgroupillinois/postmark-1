@@ -14,6 +14,30 @@ const (
     MaxAttachmentSize = 10485760
 )
 
+var (
+    BadOrMissingAPIToken        = fmt.Errorf("postmark: Bad or missing API token")
+    InvalidEmail                = fmt.Errorf("postmark: Invalid email request")
+    SenderSignatureNotFound     = fmt.Errorf("postmark: Sender signature not found")
+    SenderSignatureNotConfirmed = fmt.Errorf("postmark: Sender signature not confirmed")
+    InvalidJSON                 = fmt.Errorf("postmark: Invalid JSON")
+    IncompatibleJSON            = fmt.Errorf("postmark: Incompatible JSON")
+    NotAllowedToSend            = fmt.Errorf("postmark: Not allowed to send")
+    InactiveRecipient           = fmt.Errorf("postmark: Inactive recipient")
+    JSONRequired                = fmt.Errorf("postmark: JSON required")
+
+    ErrorCodes = map[int]error{
+        0:   BadOrMissingAPIToken,
+        300: InvalidEmail,
+        400: SenderSignatureNotFound,
+        401: SenderSignatureNotConfirmed,
+        402: InvalidJSON,
+        403: IncompatibleJSON,
+        405: NotAllowedToSend,
+        406: InactiveRecipient,
+        409: JSONRequired,
+    }
+)
+
 type Header struct {
     Name  string
     Value string
@@ -113,6 +137,10 @@ func UnmarshalMessage(msg []byte) (*Message, error) {
 
 func (r *Response) Marshal() ([]byte, error) {
     return json.Marshal(*r)
+}
+
+func (r *Response) Error() error {
+    return ErrorCodes[r.ErrorCode]
 }
 
 func UnmarshalResponse(rsp []byte) (*Response, error) {

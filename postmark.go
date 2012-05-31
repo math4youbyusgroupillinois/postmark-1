@@ -14,7 +14,7 @@ const (
 
 var (
     MissingOrIncorrectAPIKey = fmt.Errorf("postmark: Missing or incorrect API key header")
-    MalformedJSON            = fmt.Errorf("postmark: Malformed JSON or incorrect fields")
+    InvalidRequest           = fmt.Errorf("postmark: Unprocessable Entity")
     ServerError              = fmt.Errorf("postmark: Server error")
     client                   http.Client
 )
@@ -46,8 +46,6 @@ func (p *Postmark) Send(m *Message) (*Response, error) {
     switch {
     case rsp.StatusCode == 401:
         return nil, MissingOrIncorrectAPIKey
-    case rsp.StatusCode == 422:
-        return nil, MalformedJSON
     case rsp.StatusCode == 500:
         return nil, ServerError
     }
@@ -63,5 +61,10 @@ func (p *Postmark) Send(m *Message) (*Response, error) {
     if err != nil {
         return nil, err
     }
+
+    if rsp.StatusCode == 422 {
+        return prsp, InvalidRequest
+    }
+
     return prsp, nil
 }
