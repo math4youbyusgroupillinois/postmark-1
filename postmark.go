@@ -23,7 +23,7 @@ type Postmark struct {
     key string
 }
 
-func NewPostmark(apikey string) *Postmark {
+func New(apikey string) *Postmark {
     return &Postmark{key: apikey}
 }
 
