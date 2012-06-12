@@ -1,9 +1,11 @@
 package postmark
 
 import (
+    "bytes"
     "encoding/base64"
     "encoding/json"
     "fmt"
+    "io"
     "io/ioutil"
     "mime"
     "os"
@@ -99,9 +101,11 @@ func (p *Message) Attach(file string) error {
         return err
     }
 
-    // Even though we only have 10MB limit..
-    // I probably shouldn't do this..
-    cnt, err := ioutil.ReadAll(fh)
+    var buffer bytes.Buffer
+    encoder := base64.NewEncoder(base64.StdEncoding, &buffer)
+    io.Copy(encoder, fh)
+    encoder.Close()
+    cnt, err := ioutil.ReadAll(&buffer)
     if err != nil {
         return err
     }
@@ -109,12 +113,12 @@ func (p *Message) Attach(file string) error {
 
     mimeType := mime.TypeByExtension(path.Ext(file))
     if len(mimeType) == 0 {
-        return fmt.Errorf("Unknown mime type for attachment: %s", file)
+        mimeType = "application/octet-stream"
     }
 
     attachment := Attachment{
         Name:        finfo.Name(),
-        Content:     base64.StdEncoding.EncodeToString(cnt),
+        Content:     string(cnt),
         ContentType: mimeType,
     }
     p.Attachments = append(p.Attachments, attachment)
