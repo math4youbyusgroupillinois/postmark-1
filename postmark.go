@@ -8,7 +8,7 @@ import (
 )
 
 const (
-    Endpoint   = "https://api.postmarkapp.com/email"
+    Endpoint   = "https://api.postmarkapp.com"
     AuthHeader = "X-Postmark-Server-Token"
 )
 
@@ -33,26 +33,21 @@ func (p *Postmark) Send(m *Message) (*Response, error) {
         return nil, err
     }
     postData := bytes.NewBuffer(data)
-    req, err := http.NewRequest("POST", Endpoint, postData)
-    req.Header.Set("Accept", "application/json")
-    req.Header.Set("Content-Type", "application/json")
-    req.Header.Set(AuthHeader, p.key)
-
-    rsp, err := client.Do(req)
+    resp, err := p.request("POST", Endpoint+"/email", postData)
     if err != nil {
         return nil, err
     }
 
     switch {
-    case rsp.StatusCode == 401:
+    case resp.StatusCode == 401:
         return nil, MissingOrIncorrectAPIKey
-    case rsp.StatusCode == 500:
+    case resp.StatusCode == 500:
         return nil, ServerError
     }
 
     var body bytes.Buffer
-    _, err = io.Copy(&body, rsp.Body)
-    rsp.Body.Close()
+    _, err = io.Copy(&body, resp.Body)
+    resp.Body.Close()
     if err != nil {
         return nil, err
     }
@@ -62,9 +57,37 @@ func (p *Postmark) Send(m *Message) (*Response, error) {
         return nil, err
     }
 
-    if rsp.StatusCode == 422 {
+    if resp.StatusCode == 422 {
         return prsp, InvalidRequest
     }
 
     return prsp, nil
+}
+
+func (p *Postmark) Reactivate(b Bounce) error {
+    if b.CanActivate {
+        resp, err := p.request("PUT", fmt.Sprintf("%s/bounces/%s/activate", Endpoint, b.ID), nil)
+        if err != nil {
+            return err
+        }
+        switch {
+        case resp.StatusCode == 401:
+            return MissingOrIncorrectAPIKey
+        case resp.StatusCode == 500:
+            return ServerError
+        }
+        return nil
+    }
+    return nil
+}
+
+func (p *Postmark) request(method, urlStr string, body io.Reader) (*http.Response, error) {
+    req, err := http.NewRequest(method, urlStr, body)
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("Accept", "application/json")
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set(AuthHeader, p.key)
+    return client.Do(req)
 }
