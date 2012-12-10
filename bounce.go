@@ -1,7 +1,8 @@
 package postmark
 
 type Bounce struct {
-    ID, Type, Tag                        string
+    ID                                   int
+    Type, Tag                            string
     TypeCode                             int
     MessageID, BouncedAT, Details, Email string
     DumpAvailable, Inactive, CanActivate bool
