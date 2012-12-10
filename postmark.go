@@ -66,7 +66,7 @@ func (p *Postmark) Send(m *Message) (*Response, error) {
 
 func (p *Postmark) Reactivate(b Bounce) error {
     if b.CanActivate {
-        resp, err := p.request("PUT", fmt.Sprintf("%s/bounces/%s/activate", Endpoint, b.ID), nil)
+        resp, err := p.request("PUT", fmt.Sprintf("%s/bounces/%d/activate", Endpoint, b.ID), nil)
         if err != nil {
             return err
         }
